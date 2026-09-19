@@ -1,12 +1,13 @@
-# SnakeOS
+# SnakeOS v0.00
 x86-64 OS GRUB based
 
 ## Features
 - IDT with Handlers
 - Jump to Long mode
 - VGA Text Driver
-- Handler Test With ud2
-
+- PIC
+- PIT (IRQ0)
+- PS/2 Keyboard (IRQ1)
 ## Setup
 - Clone this repo.
 ```

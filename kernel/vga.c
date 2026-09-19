@@ -33,6 +33,12 @@ void vga_putchar(char c) {
     } else if (c == '\r') {
         col = 0;
         return;
+    } else if (c == '\b') {
+        if (col > 0) {
+            col--;
+            vga[row * VGA_WIDTH + col] = (uint16_t)' ' | ((uint16_t)color << 8);
+        }
+        return;
     } else if (c == '\t') {
         col = (col + 8) & ~(size_t)7;
         if (col >= VGA_WIDTH) { col = 0; row++; }
@@ -46,7 +52,6 @@ void vga_putchar(char c) {
         row = VGA_HEIGHT - 1;
     }
 }
-
 void vga_print(const char *s) {
     while (*s) vga_putchar(*s++);
 }

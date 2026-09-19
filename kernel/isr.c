@@ -1,5 +1,8 @@
 #include "isr.h"
 #include "kernel.h"
+#include "pic.h"
+#include "pit.h"
+#include "keyboard.h"
 
 static const char *exception_names[] = {
     "Divide Error", "Debug", "NMI", "Breakpoint",
@@ -12,12 +15,29 @@ static const char *exception_names[] = {
     "Hypervisor", "VMM Communication", "Security", "Reserved"
 };
 
+static irq_handler_t irq_handlers[16] = {0};
+
+void irq_register(uint8_t irq, irq_handler_t fn) {
+    if (irq < 16) irq_handlers[irq] = fn;
+}
+
+static void irq_dispatch(uint8_t irq) {
+    if (irq < 16 && irq_handlers[irq])
+        irq_handlers[irq]();
+    pic_send_eoi(irq);
+}
+
 void isr_handler(regs_t *r) {
+    if (r->int_no >= 32 && r->int_no < 48) {
+        irq_dispatch((uint8_t)(r->int_no - 32));
+        return;
+    }
+
     print("\n[EXCEPTION] ");
     if (r->int_no < 32)
         print(exception_names[r->int_no]);
     else
-        print("IRQ/Unknown");
+        print("Unknown");
 
     print("\n  int_no  = "); print_dec(r->int_no);
     print("\n  err_code= "); print_hex(r->err_code);

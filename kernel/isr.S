@@ -52,7 +52,13 @@ ISR_ERR   30
 ISR_NOERR 31
 
 %assign i 32
-%rep 224
+%rep 16
+    ISR_NOERR i
+%assign i i+1
+%endrep
+
+%assign i 48
+%rep 208
     ISR_NOERR i
 %assign i i+1
 %endrep
