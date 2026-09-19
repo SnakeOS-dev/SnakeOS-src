@@ -8,6 +8,11 @@ x86-64 OS GRUB based
 - PIC
 - PIT (IRQ0)
 - PS/2 Keyboard (IRQ1)
+- PMM
+- VMM
+- Heap
+- Shell
+
 ## Setup
 - Clone this repo.
 ```

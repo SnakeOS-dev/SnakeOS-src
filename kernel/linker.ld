@@ -26,9 +26,8 @@ SECTIONS
         *(COMMON)
         *(.bss)
     }
-
-    end = ALIGN(4K);
-
+    . = ALIGN(4096);
+    kernel_end = .;
     /DISCARD/ :
 	{
 		*(.comment)

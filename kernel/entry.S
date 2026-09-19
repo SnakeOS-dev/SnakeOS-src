@@ -98,9 +98,7 @@ bits 64
     mov ss, ax
 
     mov rsp, stack_top
-    lidt [idt_ptr]
-
-    mov rdi, rsi
+    mov edi, ebx
     call kernel_main
 
 .hang:

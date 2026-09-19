@@ -5,6 +5,6 @@
 #include <stddef.h>
 #include "utils.h"
 
-void kernel_main(void);
+void kernel_main(uint32_t mbi_addr);
 
 #endif
