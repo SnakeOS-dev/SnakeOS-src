@@ -58,25 +58,11 @@ static void coalesce(block_t *b) {
     }
 }
 
-static int grow_heap(size_t need) {
-    if (heap_end - HEAP_BASE + need > HEAP_MAX)
-        return -1;
-
-    uint64_t pages = (need + PAGE_SIZE - 1) / PAGE_SIZE;
-    for (uint64_t i = 0; i < pages; i++) {
-        void *phys = pmm_alloc_page();
-        if (!phys) return -1;
-        vmm_map(heap_end, (uint64_t)phys, PAGE_PRESENT | PAGE_RW);
-        heap_end += PAGE_SIZE;
-    }
-    return 0;
-}
 
 void heap_init(void) {
     void *phys = pmm_alloc_page();
     if (!phys) return;
-    vmm_map(HEAP_BASE, (uint64_t)phys, PAGE_PRESENT | PAGE_RW);
-
+    vmm_map(HEAP_BASE, (uint64_t)phys, PAGE_PRESENT | PAGE_RW | PAGE_USER);
     heap_end  = HEAP_BASE + PAGE_SIZE;
     heap_used = 0;
 
@@ -96,34 +82,46 @@ static block_t *find_free(size_t size) {
     return 0;
 }
 
+static int grow_heap(size_t need) {
+    if (heap_end - HEAP_BASE + need > HEAP_MAX)
+        return -1;
+
+    uint64_t pages = (need + PAGE_SIZE - 1) / PAGE_SIZE;
+    for (uint64_t i = 0; i < pages; i++) {
+        void *phys = pmm_alloc_page();
+        if (!phys) return -1;
+        vmm_map(heap_end, (uint64_t)phys, PAGE_PRESENT | PAGE_RW | PAGE_USER);
+        heap_end += PAGE_SIZE;
+    }
+    return 0;
+}
+
 static block_t *extend_tail(size_t size) {
     block_t *last = head;
     while (last->next) last = last->next;
 
-    if (!(last->flags & BLOCK_FREE)) {
-        size_t need = HDR_SIZE + size;
-        if (grow_heap(need) < 0) return 0;
+    uint64_t last_end = (uint64_t)last + HDR_SIZE + last->size;
+    uint64_t need_end = last_end + HDR_SIZE + size;
 
-        block_t *nb = (block_t *)((uint8_t *)last + HDR_SIZE + last->size);
+    if (need_end > heap_end) {
+        uint64_t extra = need_end - heap_end;
+        if (grow_heap(extra) < 0) return 0;
+    }
+
+    if (!(last->flags & BLOCK_FREE)) {
+        block_t *nb = (block_t *)last_end;
         nb->magic = HEAP_MAGIC;
         nb->flags = BLOCK_FREE;
-        nb->size  = (heap_end - (uint64_t)nb - HDR_SIZE);
+        nb->size  = heap_end - (uint64_t)nb - HDR_SIZE;
         nb->next  = 0;
         nb->prev  = last;
         last->next = nb;
         last = nb;
     } else {
-        size_t need = size;
-        if (last->size < need) {
-            size_t extra = need - last->size;
-            extra = (extra + PAGE_SIZE - 1) & ~(size_t)(PAGE_SIZE - 1);
-            if (grow_heap(extra) < 0) return 0;
-            last->size += extra;
-        }
+        last->size = heap_end - (uint64_t)last - HDR_SIZE;
     }
     return last;
 }
-
 void *kmalloc(size_t size) {
     if (size == 0) return 0;
     size = ALIGN8(size);

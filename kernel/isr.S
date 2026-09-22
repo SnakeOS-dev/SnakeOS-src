@@ -1,23 +1,20 @@
 section .text
 bits 64
-
 extern isr_handler
-
+extern sched_switch_stack
 %macro ISR_NOERR 1
 global isr%1
 isr%1:
-    push qword 0
-    push qword %1
-    jmp isr_common
+push qword 0
+push qword %1
+jmp isr_common
 %endmacro
-
 %macro ISR_ERR 1
 global isr%1
 isr%1:
-    push qword %1
-    jmp isr_common
+push qword %1
+jmp isr_common
 %endmacro
-
 ISR_NOERR 0
 ISR_NOERR 1
 ISR_NOERR 2
@@ -50,64 +47,63 @@ ISR_NOERR 28
 ISR_ERR   29
 ISR_ERR   30
 ISR_NOERR 31
-
 %assign i 32
 %rep 16
-    ISR_NOERR i
+ISR_NOERR i
 %assign i i+1
 %endrep
-
 %assign i 48
 %rep 208
-    ISR_NOERR i
+ISR_NOERR i
 %assign i i+1
 %endrep
-
 isr_common:
-    push rax
-    push rbx
-    push rcx
-    push rdx
-    push rsi
-    push rdi
-    push rbp
-    push r8
-    push r9
-    push r10
-    push r11
-    push r12
-    push r13
-    push r14
-    push r15
-
-    cld
-    mov rdi, rsp
-    call isr_handler
-
-    pop r15
-    pop r14
-    pop r13
-    pop r12
-    pop r11
-    pop r10
-    pop r9
-    pop r8
-    pop rbp
-    pop rdi
-    pop rsi
-    pop rdx
-    pop rcx
-    pop rbx
-    pop rax
-
-    add rsp, 16
-    iretq
-
+push rax
+push rbx
+push rcx
+push rdx
+push rbp
+push rsi
+push rdi
+push r8
+push r9
+push r10
+push r11
+push r12
+push r13
+push r14
+push r15
+cld
+mov rdi, rsp
+call isr_handler
+mov rdi, rsp
+call sched_switch_stack
+test rax, rax
+jz .resume
+mov rsp, rax
+.resume:
+pop r15
+pop r14
+pop r13
+pop r12
+pop r11
+pop r10
+pop r9
+pop r8
+pop rdi
+pop rsi
+pop rbp
+pop rdx
+pop rcx
+pop rbx
+pop rax
+add rsp, 16
+iretq
 section .rodata
 global isr_stub_table
 isr_stub_table:
 %assign i 0
 %rep 256
-    dq isr%+i
+dq isr%+i
 %assign i i+1
 %endrep

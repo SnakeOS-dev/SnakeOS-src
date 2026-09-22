@@ -135,7 +135,6 @@ void vmm_init(void) {
 
     kernel_pml4 = (uint64_t)page;
 
-    vmm_map_range_huge(0, 0x100000000ULL, PAGE_PRESENT | PAGE_RW);
-
+    vmm_map_range_huge(0, 0x100000000ULL, PAGE_PRESENT | PAGE_RW | PAGE_USER);
     vmm_switch(kernel_pml4);
 }

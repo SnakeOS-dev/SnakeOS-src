@@ -11,7 +11,9 @@ x86-64 OS GRUB based
 - PMM
 - VMM
 - Heap
-- Shell
+- Scheduler
+- ring 3
+- syscalls
 
 ## Setup
 - Clone this repo.
