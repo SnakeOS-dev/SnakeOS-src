@@ -13,19 +13,24 @@ KERNEL_OBJS := $(addprefix bin/kernel/, $(KERNEL_S_SOURCES:.S=.S.o) $(KERNEL_C_S
 # Flags
 ASFLAGS = -f elf64 -g -F dwarf
 CCFLAGS = -m64 -std=gnu11 -ffreestanding -Wall -Wextra -nostdlib -I kernel -fno-stack-protector -Wno-unused-parameter -fno-stack-check -fno-lto -mno-mmx -mno-80387 -mno-sse -mno-sse2 -mno-red-zone
-QEMUFLAGS = -debugcon stdio -cdrom bin/$(IMAGE_NAME).iso -boot d
+QEMUFLAGS = -debugcon stdio -drive file=bin/disk.img,format=raw,if=ide -cdrom bin/$(IMAGE_NAME).iso -boot d
 LDFLAGS = -m elf_x86_64 -Tkernel/linker.ld -z noexecstack
 
 # Output image name
 IMAGE_NAME = image
 
-all: boot kernel iso
+all: boot kernel iso disk
 
 run: all
-	@qemu-system-i386 $(QEMUFLAGS)
+	@qemu-system-x86_64 $(QEMUFLAGS)
 
 run-gdb: all
-	@qemu-system-i386 $(QEMUFLAGS) -S -s
+	@qemu-system-x86_64 $(QEMUFLAGS) -S -s
+
+disk: bin/disk.img
+
+bin/disk.img: disk.sh
+	@bash ./disk.sh 64 $@
 
 bin/kernel/%.c.o: kernel/%.c
 	@echo " CC $<"

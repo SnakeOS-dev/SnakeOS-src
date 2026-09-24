@@ -14,6 +14,9 @@ x86-64 OS GRUB based
 - Scheduler
 - ring 3
 - syscalls
+- Shell
+- Disk Driver
+- Ext2 File system
 
 ## Setup
 - Clone this repo.
